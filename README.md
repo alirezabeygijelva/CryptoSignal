@@ -1,5 +1,5 @@
 
-# Financial Market Signal
+# Crypto Signal
 
 ## Overview
 This service is built using Spring Boot with Kotlin (version 1.9.24) and Java 21. The project is managed using Maven (including Maven Wrapper) and is designed to provide a set of APIs for interacting with a financial market application. The service includes OpenAPI documentation and a Swagger UI for easy API exploration.
