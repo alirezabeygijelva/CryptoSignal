@@ -1,0 +1,901 @@
+openapi: "3.0.3"
+info:
+  title: Financial Market Signal (REST API)
+  version: "1.0"
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: User
+    description: User related APIs.
+  - name: AdminUser
+    description: Admin User related APIs.
+  - name: PublicMarket
+    description: Public Market related APIs.
+  - name: AdminMarket
+    description: Admin Market related APIs.
+  - name: Notification
+    description: Notification related APIs.
+  - name: Subscription
+    description: Subscription Signal related APIs.
+  - name: Auth
+    description: Authentication APIs.
+  - name: Binance
+    description: Binanace related APIs.
+
+paths:
+  /markets:
+    get:
+      tags: [ PublicMarket ]
+      summary: Get all available financial markets.
+      operationId: getAllMarkets
+      x-spring-paginated: true
+      responses:
+        200:
+          description: Retruns list of markets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketDTO"
+    post:
+      tags: [ AdminMarket ]
+      summary: Create new market.
+      operationId: createMarket
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketRequestBody"
+      responses:
+        200:
+          description: Retruns list of markets with new added market.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketDTO"
+  /markets/{marketId}:
+    get:
+      tags: [ PublicMarket ]
+      summary: Get a financial markets.
+      operationId: getMarket
+      parameters:
+        - name: marketId
+          in: path
+          required: true
+          description: The financial market identifier
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Retruns list of markets.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketDTO"
+    delete:
+      tags: [ AdminMarket ]
+      summary: Delete a market.
+      operationId: deleteMarket
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: marketId
+          in: path
+          required: true
+          description: The financial market identifier
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Retruns list of markets without removed market.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketDTO"
+  /markets/{marketId}/assets:
+    get:
+      tags: [ PublicMarket ]
+      summary: Get all available assets in cache.
+      operationId: getAllAssets
+      x-spring-paginated: true
+      parameters:
+        - name: marketId
+          in: path
+          required: true
+          description: The financial market identifier
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Retruns list of assets in cache.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetDTO"
+  /markets/{marketId}/assets/{symbol}:
+    get:
+      tags: [ PublicMarket ]
+      summary: Get an available asset in cache.
+      operationId: getAsset
+      parameters:
+        - name: marketId
+          in: path
+          required: true
+          description: The financial market identifier.
+          schema:
+            type: integer
+        - name: symbol
+          in: path
+          required: true
+          description: The financial market symbol.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Retruns list of assets in cache.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetDTO"
+  /auth/signup:
+    post:
+      tags: [ Auth ]
+      summary: Signup user and generate auth token.
+      operationId: singup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupUserDTO"
+      responses:
+        200:
+          description: Returns authentication token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenDTO"
+        400:
+          description: Invalid request body.
+          content: { }
+  /auth/token:
+    post:
+      tags: [ Auth ]
+      summary: Send credentials to get auth token.
+      operationId: getAuthToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthTokenRequestBody"
+      responses:
+        200:
+          description: Returns authentication token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenDTO"
+        400:
+          description: Invalid request body.
+          content: { }
+        404:
+          description: User not found.
+          content: { }
+        500:
+          description: Internal server error.
+          content: { }
+  /auth/refreshtoken:
+    post:
+      tags: [ Auth ]
+      summary: Reinvoke authentication token.
+      operationId: getRefreshedToken
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequestBody"
+      responses:
+        200:
+          description: Returns authentication token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenDTO"
+        400:
+          description: Invalid request body.
+          content: { }
+        404:
+          description: Refresh token not found.
+          content: { }
+        500:
+          description: Internal server error.
+          content: { }
+  /auth/me:
+    get:
+      tags: [ Auth ]
+      summary: Get logged in user's account information.
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Returns user's account info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountInfoDTO"
+        400:
+          description: Invalid request body.
+          content: { }
+        500:
+          description: Internal server error.
+          content: { }
+  /auth/request-reset-password:
+    post:
+      tags: [ Auth ]
+      summary: Request for reset user password.
+      operationId: requestResetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestResetPasswordRequestBody"
+      responses:
+        200:
+          description: send reset password request to email.
+          content: { }
+  /auth/reset-password:
+    post:
+      tags: [ Auth ]
+      summary: Verify reset password token and change password.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequestBody"
+      responses:
+        200:
+          description: verified reset token and reset password.
+          content: { }
+  /binance/streams:
+    get:
+      tags: [ Binance ]
+      summary: Get all binance streams available.
+      operationId: getBinanceStreams
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Returns list of binance streams.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BinanceStreamDTO"
+    post:
+      tags: [ Binance ]
+      summary: Add new binance stream.
+      operationId: createBinanceStream
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BinanceStreamDTO"
+      responses:
+        200:
+          description: Returns list of binance streams.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BinanceStreamDTO"
+  /binance/streams/{streamName}:
+    delete:
+      tags: [ Binance ]
+      summary: Delete a binance stream.
+      operationId: deleteBinanceStream
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: streamName
+          in: path
+          required: true
+          description: The binance stream id.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns list of binance streams.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BinanceStreamDTO"
+  /subscriptions:
+    get:
+      tags: [ Subscription ]
+      summary: Get all logged in user's subscription signals.
+      operationId: getSubscriptions
+      x-spring-paginated: true
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Returns list of subscription signals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionDTO"
+    post:
+      tags: [ Subscription ]
+      summary: Create new subscription signal for logged in user.
+      operationId: createSubscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewSubscriptionRequestBody"
+      responses:
+        200:
+          description: Returns list of subscription signals with added subscription siganl.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionDTO"
+  /subscriptions/{subscriptionId}:
+    get:
+      tags: [ Subscription ]
+      summary: Get a logged in user's subscription signal by its id.
+      operationId: getSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          description: The subscription id.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Returns a subscription signals.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionDTO"
+    post:
+      tags: [ Subscription ]
+      summary: Update a subscription signal for logged in user.
+      operationId: updateSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          description: The subscription id.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionRequestBody"
+      responses:
+        200:
+          description: Returns list of subscription signals with updated subscription siganl.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionDTO"
+    delete:
+      tags: [ Subscription ]
+      summary: Delete a subscription signal for logged in user.
+      operationId: deleteSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          description: The subscription id.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Returns list of subscription signals without removed subscription siganl.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionDTO"
+  /subscriptions/symbols:
+    get:
+      tags: [ Subscription ]
+      summary: Get all logged in user's subscription signal grouped by symbol.
+      operationId: getSubscriptionsGroupedBySymbol
+      x-spring-paginated: true
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: Returns list of subscription overview signals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionOverviewDTO"
+  /subscriptions/symbols/{symbol}:
+    get:
+      tags: [ Subscription ]
+      summary: Get all logged in user's subscription signal for specefic symbol.
+      operationId: getSubscriptionsBySymbol
+      x-spring-paginated: true
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: symbol
+          in: path
+          required: true
+          description: The asset symbol.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns list of subscription signals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionDTO"
+  /users:
+    post:
+      tags: [ User ]
+      summary: Update user account informations.
+      operationId: updateUserAcount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserAccountRequestBody"
+      responses:
+        200:
+          description: Returns updated user account info.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountInfoDTO"
+  /users/change-password:
+    post:
+      tags: [ User ]
+      summary: Change logged in user password
+      operationId: changePassword
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequestBody"
+      responses:
+        200:
+          description: Change password successful.
+          content: { }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  schemas:
+
+    MarketDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+
+    MarketRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: false
+          minLength: 3
+        type:
+          type: string
+          nullable: false
+          enum:
+            - "Cryptocurrency"
+            - "Forex"
+            - "Stock"
+            - "Commodity"
+            - "Index"
+            - "Other"
+        description:
+          type: string
+          minLength: 3
+      required:
+        - name
+        - type
+        - description
+
+    AssetDTO:
+      type: object
+      properties:
+        symbol:
+          type: string
+        marketName:
+          type: string
+        openPrice:
+          type: number
+          format: double
+        closePrice:
+          type: number
+          format: double
+        highPrice:
+          type: number
+          format: double
+        lowPrice:
+          type: number
+          format: double
+        volume:
+          type: number
+          format: double
+        openTime:
+          type: integer
+          format: int64
+        closeTime:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+
+    SignupUserDTO:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 3
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+          pattern: '^[\w\.\-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$'
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+        password:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+        confirmPassword:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - password
+        - confirmPassword
+
+    AuthTokenRequestBody:
+      type: object
+      properties:
+        username:
+          type: string
+          format: email
+          pattern: '^[\w\.\-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$'
+        password:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+      required:
+        - username
+        - password
+
+    RefreshTokenRequestBody:
+      type: object
+      properties:
+        token:
+          type: string
+
+    AuthTokenDTO:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+        tokenType:
+          type: string
+
+    AccountInfoDTO:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        clientId:
+          type: integer
+          format: int64
+        email:
+          type: string
+        phone:
+          type: string
+        telegramId:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserAccountRequestBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 3
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+          pattern: '^[\w\.\-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$'
+        phone:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+        telegramId:
+          type: string
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+
+    BinanceStreamDTO:
+      type: object
+      properties:
+        streamName:
+          type: string
+          nullable: false
+          minLength: 3
+      required:
+        - streamName
+
+    SubscriptionOverviewDTO:
+      type: object
+      properties:
+        marketId:
+          type: integer
+        symbol:
+          type: string
+        signals:
+          type: integer
+
+    SubscriptionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        marketId:
+          type: integer
+        symbol:
+          type: string
+        targetType:
+          type: string
+        targetValue:
+          type: number
+        message:
+          type: string
+        notificationType:
+          type: string
+        notificationEnabled:
+          type: boolean
+        timeout:
+          type: integer
+          format: int64
+        lastTriggered:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    NewSubscriptionRequestBody:
+      type: object
+      properties:
+        marketId:
+          type: integer
+          nullable: false
+        symbol:
+          type: string
+          nullable: false
+        targetType:
+          type: string
+          nullable: false
+          enum:
+            - "MaxPrice"
+            - "MinPrice"
+            - "Price"
+            - "Volume"
+            - "MaxChange"
+            - "MinChange"
+            - "Change"
+        targetValue:
+          type: number
+          nullable: false
+        message:
+          type: string
+          nullable: false
+        notificationType:
+          type: string
+          nullable: false
+          enum:
+            - "EMAIL"
+            - "SMS"
+            - "TELEGRAM"
+        notificationEnabled:
+          type: boolean
+          nullable: false
+        timeout:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: false
+      required:
+        - marketId
+        - symbol
+        - targetType
+        - targetValue
+        - message
+        - notificationType
+        - notificationEnabled
+        - timeout
+
+    SubscriptionRequestBody:
+      type: object
+      properties:
+        targetValue:
+          type: number
+          nullable: false
+        message:
+          type: string
+          nullable: false
+        notificationType:
+          type: string
+          nullable: false
+          enum:
+            - "EMAIL"
+            - "SMS"
+            - "TELEGRAM"
+        notificationEnabled:
+          type: boolean
+          nullable: false
+        timeout:
+          type: integer
+          format: int64
+          minimum: 0
+          nullable: false
+      required:
+        - targetValue
+        - message
+        - notificationType
+        - notificationEnabled
+        - timeout
+
+    RequestResetPasswordRequestBody:
+      type: object
+      properties:
+        email:
+          description: User account's email.
+          type: string
+          format: email
+          pattern: '^[\w\.\-]+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$'
+      required:
+        - email
+
+    ResetPasswordRequestBody:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 36
+        password:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+        confirmPassword:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+      required:
+        - token
+        - password
+        - confirmPassword
+
+    ChangePasswordRequestBody:
+      type: object
+      properties:
+        password:
+          type: string
+        newPassword:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+        confirmNewPassword:
+          type: string
+          minLength: 3
+          pattern: '^.{3,}$'
+      required:
+        - password
+        - newPassword
+        - confirmNewPassword

@@ -1,0 +1,14 @@
+{
+  "library": "spring-boot",
+  "useSpringBoot3": true,
+  "hideGenerationTimestamp": true,
+  "sourceFolder": "src/main/java",
+  "modelPackage": "dev.alireza.fms.openapi.model",
+  "apiPackage": "dev.alireza.fms.openapi.api",
+  "invokerPackage": "dev.alireza.fms.openapi",
+  "serializableModel": true,
+  "useTags": true,
+  "useGzipFeature": true,
+  "useResponseEntity": false,
+  "responseWrapper": "dev.alireza.fms.common.dto.ResponseApi"
+}

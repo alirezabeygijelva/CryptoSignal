@@ -1,0 +1,39 @@
+# Build Stage
+FROM maven:3.9.6-eclipse-temurin-21
+
+WORKDIR /app
+COPY . .
+COPY ./v2ray-config.json /etc/v2ray/config.json
+
+# Download and install dockerize.
+# Needed so the web container will wait for MySQL to start.
+ENV DOCKERIZE_VERSION v0.19.0
+RUN curl -sfL https://github.com/powerman/dockerize/releases/download/"$DOCKERIZE_VERSION"/dockerize-`uname -s`-`uname -m` | install /dev/stdin /usr/local/bin/dockerize
+
+EXPOSE 80
+EXPOSE 8080
+EXPOSE 3306
+EXPOSE 10808
+EXPOSE 10809
+
+# Pre-Install Maven Dependency and Plugins
+# Comment the following two commands if you don't want dependencies and plugins to be installed when building the image.
+RUN ["mvn", "dependency:resolve"]
+RUN ["mvn", "dependency:resolve-plugins"]
+
+ENV JAVA_OPTS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=10809 -DsocksProxyHost=127.0.0.1 -DsocksProxyPort=10808"
+
+# Install V2Ray
+RUN apt-get update && apt-get install -y curl && \
+    curl -L -o /tmp/v2ray.zip https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip && \
+    apt-get install -y unzip && unzip /tmp/v2ray.zip -d /usr/local/bin/v2ray && \
+    rm /tmp/v2ray.zip && \
+    mkdir -p /etc/v2ray
+
+# Set Executable start.sh
+RUN chmod +x /app/start.sh
+
+# Wait for the db to startup(via dockerize), then
+# Build and run fms, requires a db to be available on port 3306
+CMD dockerize -wait tcp://mysql-db:3306 -timeout 60s && \
+    /app/start.sh
